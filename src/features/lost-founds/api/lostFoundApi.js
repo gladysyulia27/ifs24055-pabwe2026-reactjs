@@ -1,14 +1,18 @@
-import { apiFetch } from "../../../helpers/apiHelper";
+import { callApi } from "../../../helpers/apiHelper";
 
-export const getLostFounds = (params) => apiFetch("/lost-founds", { params });
-export const getLostFound = (id) => apiFetch(`/lost-founds/${id}`);
-export const addLostFound = (body) => apiFetch("/lost-founds", { method: "POST", body });
-export const changeLostFound = (id, body) => apiFetch(`/lost-founds/${id}`, { method: "PUT", body });
-export const changeCover = (id, file) => {
+const BASE = "/lost-founds";
+
+// params: { status: "lost"|"found", is_completed: 1|0, is_me: 1 }
+export const fetchLostFounds = (params) => callApi(BASE, { params });
+export const fetchLostFound = (id) => callApi(`${BASE}/${id}`);
+export const postLostFound = (payload) => callApi(BASE, { method: "POST", body: payload });
+export const putLostFound = (id, payload) =>
+  callApi(`${BASE}/${id}`, { method: "PUT", body: payload });
+export const postLostFoundCover = (id, file) => {
   const form = new FormData();
   form.append("cover", file);
-  return apiFetch(`/lost-founds/${id}/cover`, { method: "POST", form });
+  return callApi(`${BASE}/${id}/cover`, { method: "POST", form });
 };
-export const deleteLostFound = (id) => apiFetch(`/lost-founds/${id}`, { method: "DELETE" });
-export const getStatsDaily = () => apiFetch("/lost-founds/stats/daily");
-export const getStatsMonthly = () => apiFetch("/lost-founds/stats/monthly");
+export const removeLostFound = (id) => callApi(`${BASE}/${id}`, { method: "DELETE" });
+export const fetchStatsDaily = () => callApi(`${BASE}/stats/daily`);
+export const fetchStatsMonthly = () => callApi(`${BASE}/stats/monthly`);

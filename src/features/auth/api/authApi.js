@@ -1,4 +1,4 @@
-import {apiFetch} from '../../../helpers/apiHelper';
-export const registerApi=payload=>apiFetch('/auth/register',{method:'POST',body:payload,auth:false});
-export const loginApi=payload=>apiFetch('/auth/login',{method:'POST',body:payload,auth:false});
-export const logoutApi=()=>apiFetch('/auth/logout',{method:'POST'});
+import { callApi } from "../../../helpers/apiHelper";
+
+export const postRegister = (payload) => callApi("/auth/register", { method: "POST", body: payload });
+export const postLogin = (payload) => callApi("/auth/login", { method: "POST", body: payload });

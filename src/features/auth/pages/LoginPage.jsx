@@ -1,73 +1,99 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import { IconEye, IconEyeOff, IconLoader2 } from "@tabler/icons-react";
 import useInput from "../../../hooks/useInput";
 import { asyncLogin } from "../states/action";
-import { showErrorDialog } from "../../../helpers/toolsHelper";
 
-export const inputCls = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 focus:outline-2 focus:outline-teal-600";
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginPage() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const [email, setEmail] = useInput();
-  const [password, setPassword] = useInput();
-  const [busy, setBusy] = useState(false);
+  const email = useInput("");
+  const password = useInput("");
+  const [reveal, setReveal] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
-  const submit = async (e) => {
-    e.preventDefault();
-    if (!email || !password) return showErrorDialog("Email dan kata sandi wajib diisi.");
-    setBusy(true);
-    const ok = await dispatch(asyncLogin({ email, password }));
-    setBusy(false);
-    if (ok) navigate("/");
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const found = {};
+    if (!EMAIL_PATTERN.test(email.value)) found.email = "Format email tidak valid";
+    if (password.value.length < 6) found.password = "Kata sandi minimal 6 karakter";
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
+
+    setSubmitting(true);
+    await dispatch(asyncLogin({ email: email.value, password: password.value }));
+    setSubmitting(false);
   };
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      <h1 className="text-2xl font-bold">Masuk</h1>
-      
-      {/* 1. Tambah id="login-email-input" */}
-      <label className="block text-sm font-medium">
-        Email
-        <input
-          id="login-email-input"
-          type="email"
-          name="email"
-          autoComplete="email"
-          className={inputCls}
-          value={email}
-          onChange={setEmail}
-        />
-      </label>
+    <div className="rounded-[2rem] bg-white p-8 shadow-xl shadow-indigo-950/5 ring-1 ring-stone-200">
+      <h1 className="text-3xl font-extrabold text-indigo-950">Masuk</h1>
+      <p className="mt-2 text-sm text-stone-600">Lanjutkan untuk melihat dan mengelola laporan barang.</p>
 
-      {/* 2. Tambah id="login-password-input" */}
-      <label className="block text-sm font-medium">
-        Kata sandi
-        <input
-          id="login-password-input"
-          type="password"
-          name="password"
-          autoComplete="current-password"
-          className={inputCls}
-          value={password}
-          onChange={setPassword}
-        />
-      </label>
+      <form onSubmit={handleSubmit} noValidate className="mt-8 space-y-5">
+        <div>
+          <label htmlFor="login-email-input" className="mb-1.5 block text-sm font-bold text-stone-700">
+            Email
+          </label>
+          <input
+            id="login-email-input"
+            type="email"
+            autoComplete="email"
+            placeholder="nama@del.ac.id"
+            value={email.value}
+            onChange={email.onChange}
+            className="w-full rounded-2xl border border-stone-300 bg-stone-50 px-4 py-3 outline-none transition focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100"
+          />
+          {errors.email && <p className="mt-1.5 text-sm font-medium text-rose-600">{errors.email}</p>}
+        </div>
 
-      {/* 3. Tambah id="login-submit-button" */}
-      <button
-        id="login-submit-button"
-        type="submit"
-        disabled={busy}
-        className="w-full rounded-lg bg-teal-700 py-2 font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
-      >
-        {busy ? "Memproses..." : "Masuk"}
-      </button>
+        <div>
+          <label htmlFor="login-password-input" className="mb-1.5 block text-sm font-bold text-stone-700">
+            Kata sandi
+          </label>
+          <div className="relative">
+            <input
+              id="login-password-input"
+              type={reveal ? "text" : "password"}
+              autoComplete="current-password"
+              value={password.value}
+              onChange={password.onChange}
+              className="w-full rounded-2xl border border-stone-300 bg-stone-50 py-3 pl-4 pr-12 outline-none transition focus:border-indigo-600 focus:ring-4 focus:ring-indigo-100"
+            />
+            <button
+              type="button"
+              aria-label={reveal ? "Sembunyikan kata sandi" : "Tampilkan kata sandi"}
+              onClick={() => setReveal((value) => !value)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-stone-600"
+            >
+              {reveal ? <IconEyeOff size={20} /> : <IconEye size={20} />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="mt-1.5 text-sm font-medium text-rose-600">{errors.password}</p>
+          )}
+        </div>
 
-      <p className="text-sm text-slate-600">
-        Belum punya akun? <Link className="font-semibold text-teal-700" to="/auth/register">Daftar</Link>
+        <button
+          id="login-submit-button"
+          type="submit"
+          disabled={submitting}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-indigo-950 py-3.5 font-bold text-amber-300 transition hover:bg-indigo-900 disabled:opacity-60"
+        >
+          {submitting && <IconLoader2 size={18} className="animate-spin" />}
+          {submitting ? "Memproses…" : "Masuk"}
+        </button>
+      </form>
+
+      <p className="mt-6 text-center text-sm text-stone-600">
+        Belum punya akun?{" "}
+        <Link to="/auth/register" className="font-bold text-indigo-700 hover:underline">
+          Daftar sekarang
+        </Link>
       </p>
-    </form>
+    </div>
   );
 }
